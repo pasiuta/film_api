@@ -23,35 +23,48 @@
 
   3) write bash command : psql -U postgres
 
-  4) write command for creating database: CREATE DATABASE node_redis_app;
+  4) write command for creating database: CREATE DATABASE dvdrental;
 
   5) write command for creating user and password :CREATE USER youruserhere WITH PASSWORD 'yourpasswordhere';
 
-  6) write this commands for giving privileges :
-    GRANT ALL PRIVILEGES ON DATABASE " node_redis_app" to youruserhere;
+  6) download database : https://www.postgresqltutorial.com/wp-content/uploads/2019/05/dvdrental.zip
+
+  7) import database to postgres container : docker exec -i my-postgres pg_restore -U youruserhere -v -d dvdrental < indicate your path to database
+     for example: docker exec -i my-postgres pg_restore -U dmytro -v -d dvdrental < /home/dmytro/Downloads/dvdrental.tar
+
+  8) write this commands for giving privileges :
+    GRANT ALL PRIVILEGES ON DATABASE " dvdrental" to youruserhere;
     ALTER ROLE youruserhere CREATEROLE CREATEDB;
-    ALTER DATABASE node_redis_app OWNER TO youruserhere;
+    ALTER DATABASE dvdrental OWNER TO youruserhere;
 
-  7) write this commands for creating tables :
-      create TABLE film(
-        id SERIAL PRIMARY KEY ,
-        title VARCHAR(255)
-      );
-
-
-  8) write this commands for giving privileges to tables:
+  9) write this commands for giving privileges to tables:
     GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public to youruserhere;
     GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public to youruserhere;
     GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public to youruserhere;
 
-  2 Section: Work with app:
+
+  2 Section: Work with cache:
+  ------------------------
+  1) write in terminal this command for running redis container:
+    docker run -d --name redis-stack-server -p 6379:6379 redis/redis-stack-server:latest
+
+  2) write in terminal this command for running redis-commander container:
+    docker run -d --name redis-commander1 rediscommander/redis-commander:latest
+
+  3 Section: Work with app:
   ------------------------
 
   1) write in command line command : npm start
 
+  2) write in command line command : redis-commander
+
   2) go to postman
 
-  3) For get 1 film you need create GET request to this url (http://localhost:8080/api/film/1)
-       IMPORTANT!
-       you need write id in parameters in query of your user which you need to get
+  3) For get 1 film you need create GET request to this url (http://localhost:8080/api/film/title)
+      for example: (http://localhost:8080/api/film/Agent Truman)
+
+   Server checks if there is data in the application's **Node** memory,
+   If there is in **Node** - server gives data. If not, it checks in the **Redis** store.
+   If there is in **Redis** - server gives data. If not, it makes a request to the database
+   Returns data to the client. Updates **Redis** and **Node** cache
 
