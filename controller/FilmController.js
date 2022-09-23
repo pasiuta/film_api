@@ -1,6 +1,8 @@
-const db = require('../db')
-const cache = require('../cache')
+const db = require('../db/db')
+const cache = require('../db/cache')
 let nodeCache = {}
+const nodeTimeout = 15000;
+const cacheTimeout = 30
 
 class FilmController {
     async getFilm(req, res) {
@@ -17,18 +19,18 @@ class FilmController {
 
         const query = await db.query('SELECT * FROM film where title = $1', [title]);
         const dbData = query.rows[0]
-        console.log('found in db')
         if (!dbData) {
             return res.status(404).json({
                 error: "film not found",
             });
         }
+        console.log('found in db')
         nodeCache[title] = JSON.stringify(dbData)
         setTimeout(() => {
             console.log("Delayed for 15 seconds.");
             delete nodeCache[title]
-        }, 15000)
-        await cache.set(title, JSON.stringify(dbData), {EX: 20})
+        }, nodeTimeout)
+        await cache.set(title, JSON.stringify(dbData), {EX: cacheTimeout})
         return res.json(dbData);
     }
 
